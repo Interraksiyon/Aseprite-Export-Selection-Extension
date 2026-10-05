@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Installation and usage guide
+    url: https://github.com/Interraksiyon/Aseprite-Export-Selection-Extension#readme
+    about: Find the menu command, installation steps, shortcuts, and format behavior.
+  - name: Aseprite documentation
+    url: https://www.aseprite.org/docs/
+    about: Help with Aseprite itself, including selection tools and application settings.

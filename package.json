@@ -1,0 +1,16 @@
+{
+  "name": "quick-export-selection",
+  "displayName": "Quick Export Selection",
+  "description": "Quickly export the selected area as PNG, GIF, or JPEG while preserving the original sprite.",
+  "version": "1.1.0",
+  "author": {
+    "name": "Interaksiyon"
+  },
+  "license": "MIT",
+  "categories": ["Scripts"],
+  "contributes": {
+    "scripts": [
+      { "path": "./main.lua" }
+    ]
+  }
+}

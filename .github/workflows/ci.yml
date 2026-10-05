@@ -1,0 +1,110 @@
+name: Validate and package
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lua-syntax:
+    name: Lua syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Lua 5.4
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes lua5.4
+      - name: Parse Lua source
+        run: |
+          luac5.4 -p main.lua
+          luac5.4 -p tests/integration.lua
+
+  package:
+    name: Validate repository and build packages
+    needs: lua-syntax
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check repository
+        run: ./scripts/check.ps1
+      - name: Build extension and source archives
+        run: ./build.ps1
+      - name: Verify package contents and checksums
+        run: ./scripts/check.ps1 -Packages
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: quick-export-selection
+          path: |
+            dist/*.aseprite-extension
+            dist/*-source.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish a new version
+    needs: package
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_COMMIT: ${{ github.sha }}
+    steps:
+      - name: Check out validated source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check whether this version is already released
+        id: version
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifest = Get-Content package.json -Raw | ConvertFrom-Json
+          $tag = "v$($manifest.version)"
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          $headers = @{ Authorization = "Bearer $env:GH_TOKEN"; Accept = 'application/vnd.github+json' }
+          try {
+            $null = Invoke-RestMethod -Uri "https://api.github.com/repos/$env:GH_REPO/releases/tags/$tag" -Headers $headers
+            "publish=false" >> $env:GITHUB_OUTPUT
+            Write-Output "Release $tag already exists; leaving it intact."
+          }
+          catch {
+            if ($null -eq $_.Exception.Response -or [int]$_.Exception.Response.StatusCode -ne 404) { throw }
+            "publish=true" >> $env:GITHUB_OUTPUT
+          }
+      - name: Build release packages
+        if: steps.version.outputs.publish == 'true'
+        run: ./build.ps1
+      - name: Publish installer, source archive, and checksums
+        if: steps.version.outputs.publish == 'true'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifest = Get-Content package.json -Raw | ConvertFrom-Json
+          $tag = "v$($manifest.version)"
+          $baseName = "$($manifest.name)-$($manifest.version)"
+          $notes = "docs/releases/$tag.md"
+          if (-not (Test-Path -LiteralPath $notes -PathType Leaf)) { throw "Missing release notes: $notes" }
+          gh release create $tag "dist/$baseName.aseprite-extension" "dist/$baseName-source.zip" "dist/SHA256SUMS.txt" --repo $env:GH_REPO --target $env:RELEASE_COMMIT --title "Quick Export Selection $tag" --notes-file $notes --latest
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub release creation failed.' }
