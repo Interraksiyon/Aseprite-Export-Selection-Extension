@@ -1,7 +1,5 @@
 # Quick Export Selection
 
-![Quick Export Selection: a selected pixel-art heart becomes a cropped export](docs/assets/banner.svg)
-
 [![Build](https://github.com/Interraksiyon/Aseprite-Export-Selection-Extension/actions/workflows/ci.yml/badge.svg)](https://github.com/Interraksiyon/Aseprite-Export-Selection-Extension/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Interraksiyon/Aseprite-Export-Selection-Extension?color=62c7a8)](https://github.com/Interraksiyon/Aseprite-Export-Selection-Extension/releases/latest)
 [![MIT License](https://img.shields.io/badge/license-MIT-9580e4.svg)](LICENSE)
