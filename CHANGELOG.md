@@ -7,6 +7,7 @@
 - Document export behavior separately and provide versioned release notes.
 - Publish new versions and their packages after successful validation on `main`.
 - Validate local Markdown links relative to each document's folder.
+- Keep all text files in LF form when checked out on Windows.
 
 ## 1.1.0 — 2026-10-05
 
