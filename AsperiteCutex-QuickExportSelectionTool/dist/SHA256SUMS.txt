@@ -1,0 +1,2 @@
+421141d99f6ed2061c05f42e4cd8f0106b8831310918f50571b0e0ef83dfa28a  quick-export-selection-1.1.0.aseprite-extension
+3c1079da4c09b6f430a6a4ccb745cb95901f54d6802e14d8f50f36a161b488fb  quick-export-selection-1.1.0-source.zip
